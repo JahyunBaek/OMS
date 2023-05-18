@@ -1,26 +1,25 @@
 package ko.co._29cm.homework.oms.Util;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import ko.co._29cm.homework.oms.Entity.Product;
+import ko.co._29cm.homework.oms.Entity.ProductEntity;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
-public class CsvManager {
+public class CsvManager implements FileManager{
 
-    public static List<Product> ReadCsvFile(){
-        String csvFile = "data.csv";
-
+    public List<ProductEntity> ReadFile(String csvFileName){
+     
         try {
-            Path path = Paths.get(csvFile);
+            Path path = Paths.get(csvFileName);
 
             return Files.lines(path)
                     .skip(1) // 첫 번째 행은 헤더이므로 건너뜀
                     .map(line -> line.split(","))
-                    .map(tokens -> Product.builder()
+                    .map(tokens -> ProductEntity.builder()
                     .id(Long.parseLong(tokens[0]))
                     .name(tokens[1])
                     .price(new BigDecimal(tokens[2]))
@@ -28,8 +27,8 @@ public class CsvManager {
                     .build())
                     .collect(Collectors.toList());
 
-        } catch (Exception e) {
-            e.getStackTrace();
+        } catch (IOException e) {
+            log.error(csvFileName, e);
             return null;
         }     
     }
