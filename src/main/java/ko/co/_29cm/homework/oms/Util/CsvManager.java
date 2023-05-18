@@ -12,13 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 public class CsvManager implements FileManager{
 
     public List<ProductEntity> ReadFile(String csvFileName){
-     
+        
         try {
             Path path = Paths.get(csvFileName);
-
+    
             return Files.lines(path)
-                    .skip(1) // 첫 번째 행은 헤더이므로 건너뜀
-                    .map(line -> line.split(","))
+                    .skip(1)
+                    .map(line -> line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"))
                     .map(tokens -> ProductEntity.builder()
                     .id(Long.parseLong(tokens[0]))
                     .name(tokens[1])

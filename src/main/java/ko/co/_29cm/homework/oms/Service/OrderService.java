@@ -1,6 +1,7 @@
 package ko.co._29cm.homework.oms.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -14,19 +15,24 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final OrderRepository orderService;
+    private final OrderRepository orderRepository;
 
+    private static String defaultPath = "src/main/resources/sample//";
     public boolean InitDB(String csvFileName){
         
         FileManager manager = new CsvManager();
 
-        List<ProductEntity> productList = manager.ReadFile(csvFileName);
+        List<ProductEntity> productList = manager.ReadFile(defaultPath+csvFileName);
         
         if(productList == null || productList.size() == 0)
             return false;
         else{
-            orderService.saveAll(productList);
+            orderRepository.saveAll(productList);
             return true;
         }
+    }
+
+    public Optional<ProductEntity> getProduct(Long producId){
+        return orderRepository.findById(producId);
     }
 }
