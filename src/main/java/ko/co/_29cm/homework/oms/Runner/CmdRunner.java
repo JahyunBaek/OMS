@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import ko.co._29cm.homework.oms.Entity.ProductEntity;
 import ko.co._29cm.homework.oms.Service.OrderService;
+import ko.co._29cm.homework.oms.Util.StringManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,7 +29,7 @@ public class CmdRunner implements CommandLineRunner {
             //String actualInput = scanner.nextLine();
             String pId;
             String pQty;
-            String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
+            String actualInput = "";
             if(orderService.InitDB(actualInput)){
                 log.info("DB INIT Completed...");
                          
@@ -42,9 +43,11 @@ public class CmdRunner implements CommandLineRunner {
                         
                         System.out.println("상품번호: ");
                         pId = scanner.nextLine();
+                        StringManager.IsEmpty(pId);
                         System.out.println("수량: ");
                         pQty = scanner.nextLine();
-                        Optional<ProductEntity> productInfo =  orderService.getProduct(Long.parseLong(actualInput));
+                        StringManager.IsEmpty(pQty);
+                        //Optional<ProductEntity> productInfo =  orderService.getProduct(Long.parseLong(actualInput));
                         
                     }else{
                         System.out.println("'q'또는 'o'를 입력해 주세요.");
