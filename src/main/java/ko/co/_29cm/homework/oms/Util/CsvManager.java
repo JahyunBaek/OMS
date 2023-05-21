@@ -20,7 +20,7 @@ public class CsvManager implements FileManager{
                     .skip(1)
                     .map(line -> line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"))
                     .map(tokens -> ProductEntity.builder()
-                    .id(Long.parseLong(tokens[0]))
+                    .productId(Long.parseLong(tokens[0]))
                     .name(tokens[1])
                     .price(new BigDecimal(tokens[2]))
                     .qty(Integer.valueOf(tokens[3]))
