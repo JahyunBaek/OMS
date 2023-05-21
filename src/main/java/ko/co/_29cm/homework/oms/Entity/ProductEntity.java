@@ -20,9 +20,9 @@ import lombok.NoArgsConstructor;
 @Table(name="product")
 public class ProductEntity {
     @Id
-    private Long id;
+    private Long productId;
 
-    @Column(nullable = false,length = 50, unique = true)
+    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
