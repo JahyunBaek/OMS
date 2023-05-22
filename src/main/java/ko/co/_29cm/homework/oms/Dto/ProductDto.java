@@ -14,5 +14,4 @@ public class ProductDto {
     private String name;
     private BigDecimal totalPrice;
     private Integer orderQty;
-    private Integer totalQty;
 }

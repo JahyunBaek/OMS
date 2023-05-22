@@ -60,20 +60,21 @@ public class OrderService {
         for (Map.Entry<Long, ProductDto> entry : productMap.entrySet()) {
             Long id = entry.getKey();
             ProductEntity product = orderRepository.findByProductId(id);
-
+            Integer calcQty = product.getQty() - entry.getValue().getOrderQty();
             try {
-                if (product.getQty() < 0) throw new SoldOutException();
+                if (calcQty < 0) throw new SoldOutException();
             }catch (SoldOutException e){
-                System.out.println("SoldOutException 발생. 주문한상품량이 제고량보다 큽니다.");
+                System.out.println("SoldOutException 발생. 주문한상품량이 재고량보다 큽니다. [상풍명 : "
+                        +product.getName()+"], 재고량["+product.getQty() +"]");
                 return false;
             }
 
-            product.setQty(product.getQty() - entry.getValue().getOrderQty());
+            product.setQty(calcQty);
 
             ProductEntity save = orderRepository.save(product);
 
             sumPrice = sumPrice.add(entry.getValue().getTotalPrice());
-            System.out.println(entry.getValue().getName()+"-"+entry.getValue().getOrderQty()+"개" +  entry.getValue().getTotalQty());
+            System.out.println(entry.getValue().getName()+"-"+entry.getValue().getOrderQty()+"개");
 
 
             System.out.println("------------------------------------------------------------");
