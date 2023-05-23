@@ -44,8 +44,8 @@ public class OrderService {
         }
     }
 
-    public ProductEntity getProduct(Long productId){
-        return orderRepository.findByProductId(productId);
+    public ProductEntity getProduct(Long i){
+        return orderRepository.findByProductId(i);
     }
 
     public List<ProductEntity> getAllProduct(){
