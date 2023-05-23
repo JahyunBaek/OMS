@@ -2,10 +2,7 @@ package ko.co._29cm.homework.oms.Entity;
 
 import java.math.BigDecimal;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,4 +27,6 @@ public class ProductEntity {
 
     @Column(nullable = false)
     private Integer qty;
+
+
 }

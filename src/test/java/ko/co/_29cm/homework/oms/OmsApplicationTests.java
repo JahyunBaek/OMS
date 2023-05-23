@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import ko.co._29cm.homework.oms.Runner.CmdRunner;
 import org.aspectj.lang.annotation.Before;
 import org.assertj.core.api.Assert;
 import org.junit.jupiter.api.AfterAll;
@@ -28,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -39,51 +41,40 @@ import ko.co._29cm.homework.oms.Entity.ProductEntity;
 import ko.co._29cm.homework.oms.Repository.OrderRepository;
 import ko.co._29cm.homework.oms.Service.OrderService;
 
-@ExtendWith(MockitoExtension.class)
+
+@SpringBootTest
+@ActiveProfiles("test")
 class OmsApplicationTests {
 
-	@InjectMocks
+	@Autowired
     private OrderService orderService;
-
 
     private static ExecutorService executorService;
 
 
 	@Test
 	@Order(0)
-	@DisplayName("DB설정")
+	@DisplayName("DB Init")
 	public void init(){
 		String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
 		boolean temp = orderService.InitDB(actualInput);
+		System.out.println("상품번호\t상품명\t판매가격\t재고수");
+		orderService.getAllProduct().forEach(System.out::println);
 		System.out.println(temp);
 	}
 
 	@BeforeEach
     void setupValues() {
         ReflectionTestUtils.setField(orderService, "deliveryFee", new BigDecimal(25));
+		ReflectionTestUtils.setField(orderService, "defaultPath", "src/main/resources/sample/");
 	}
-    @BeforeAll
-    public static void setup() {
-		
-		
-
-        executorService = Executors.newFixedThreadPool(10);
-        //orderService.InitDB("null");
-    }
-
-    @AfterAll
-    public static void cleanup() throws InterruptedException {
-        executorService.shutdown();
-        executorService.awaitTermination(10, TimeUnit.SECONDS);
-    }
-
 
     @Test
 	@Order(1)
-	@DisplayName("주문 테스트")
+	@DisplayName("Order Test")
     @Execution(ExecutionMode.CONCURRENT)
     public void MultidOrder() throws InterruptedException, ExecutionException{
-    	ExecutorService executor = Executors.newFixedThreadPool(10);
+    	ExecutorService executor = Executors.newFixedThreadPool(2);
     	Future<ProductEntity> futureFirstOrder = executor.submit(() -> {
     		Map<Long,ProductDto> productMap = new HashMap<>();
     		Long pId = 782858l;
@@ -91,17 +82,19 @@ class OmsApplicationTests {
     		ProductEntity pInfo1 = orderService.getProduct(pId);
     		productMap.put(pId, ProductDto.builder().id(pInfo1.getProductId())
     		.name(pInfo1.getName()).orderQty(pQty).totalPrice(pInfo1.getPrice().multiply(new BigDecimal(pQty))).build());
-            return orderService.getProduct(null);
+			orderService.saveOrder(productMap);
+    		return orderService.getProduct(pId);
         });
 
     	Future<ProductEntity> futureSecnodOrder = executor.submit(() -> {
     		Map<Long,ProductDto> productMap = new HashMap<>();
     		Long pId = 782858l;
-    		Integer pQty = 27;
+    		Integer pQty = 29;
     		ProductEntity pInfo1 = orderService.getProduct(pId);
     		productMap.put(pId, ProductDto.builder().id(pInfo1.getProductId())
     		.name(pInfo1.getName()).orderQty(pQty).totalPrice(pInfo1.getPrice().multiply(new BigDecimal(pQty))).build());
-            return orderService.getProduct(null);
+			orderService.saveOrder(productMap);
+    		return orderService.getProduct(pId);
         });
 
 		ProductEntity p1 = futureFirstOrder.get();

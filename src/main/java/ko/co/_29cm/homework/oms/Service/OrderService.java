@@ -18,6 +18,7 @@ import ko.co._29cm.homework.oms.Repository.OrderRepository;
 import ko.co._29cm.homework.oms.Util.CsvManager;
 import ko.co._29cm.homework.oms.Util.FileManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
@@ -27,9 +28,11 @@ public class OrderService {
     @Value("${Price.deliveryFee}")
     private BigDecimal deliveryFee;
 
+    @Value("${defaultPath}")
+    private String defaultPath;
+
     private final OrderRepository orderRepository;
 
-    private static String defaultPath = "src/main/resources/sample//";
     public boolean InitDB(String csvFileName){
         
         FileManager manager = new CsvManager();
@@ -44,6 +47,7 @@ public class OrderService {
         }
     }
 
+    @Transactional
     public ProductEntity getProduct(Long i){
         return orderRepository.findByProductId(i);
     }
@@ -52,7 +56,7 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public boolean saveOrder(Map<Long,ProductDto> productMap){
 
         BigDecimal sumPrice = new BigDecimal(0);
@@ -89,7 +93,9 @@ public class OrderService {
             System.out.println("------------------------------------------------------------");
             System.out.println("결제금액: "+ StringManager.getFormatStr(sumPrice) +"원");
             System.out.println("------------------------------------------------------------");
+
         }
+
         return true;
     }
 }
