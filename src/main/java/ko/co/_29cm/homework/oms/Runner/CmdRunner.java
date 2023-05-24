@@ -30,8 +30,8 @@ public class CmdRunner implements CommandLineRunner {
         try (Scanner scanner = new Scanner(System.in)) {
             log.info("INIT DB...");
             System.out.println("Please Input File Name \n Example ===> [29CM 23 SS 공채] 백엔드 과제 _items.csv ");
-            //String actualInput = scanner.nextLine();
-            String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
+            String actualInput = scanner.nextLine();
+            //String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
 
             if (orderService.InitDB(actualInput)) {
                 log.info("DB INIT Completed...");
@@ -85,7 +85,7 @@ public class CmdRunner implements CommandLineRunner {
                     }
                 } else {
                     Long convertId = Long.parseLong(pId);
-                    ProductEntity product = orderService.getProduct(convertId);
+                    Optional<ProductEntity> product = orderService.getProduct(convertId);
 
                     if (product == null) {
                         throw new ProductNotFoundException();
@@ -105,7 +105,7 @@ public class CmdRunner implements CommandLineRunner {
                         }
                     } else {
                         Integer convertQty = Integer.parseInt(pQty);
-                        BigDecimal priceResult = product.getPrice().multiply(new BigDecimal(convertQty));
+                        BigDecimal priceResult = product.get().getPrice().multiply(new BigDecimal(convertQty));
                         addProductToOrderMap(productMap, product, convertId, convertQty, priceResult);
                     }
                 }
@@ -119,16 +119,17 @@ public class CmdRunner implements CommandLineRunner {
         }
     }
 
-    private void addProductToOrderMap(Map<Long, ProductDto> productMap, ProductEntity product, Long convertId, Integer convertQty, BigDecimal priceResult) {
+    private void addProductToOrderMap(Map<Long, ProductDto> productMap, Optional<ProductEntity> product, Long convertId, Integer convertQty, BigDecimal priceResult) {
         productMap.compute(convertId, (key, oldValue) -> {
             BigDecimal totalPrice = (oldValue != null) ? oldValue.getTotalPrice().add(priceResult) : priceResult;
             Integer orderQty = (oldValue != null) ? oldValue.getOrderQty() + convertQty : convertQty;
             return ProductDto.builder()
-                    .id(product.getProductId())
-                    .name(product.getName())
+                    .id(product.get().getProductId())
+                    .name(product.get().getName())
                     .totalPrice(totalPrice)
                     .orderQty(orderQty)
                     .build();
         });
     }
+
 }

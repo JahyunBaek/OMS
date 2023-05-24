@@ -1,6 +1,7 @@
 package ko.co._29cm.homework.oms.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,8 +49,8 @@ public class OrderService {
     }
 
     @Transactional
-    public ProductEntity getProduct(Long i){
-        return orderRepository.findByProductId(i);
+    public Optional<ProductEntity> getProduct(Long i){
+        return orderRepository.findById(i);
     }
 
     public List<ProductEntity> getAllProduct(){
@@ -57,7 +58,7 @@ public class OrderService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public boolean saveOrder(Map<Long,ProductDto> productMap){
+    public boolean saveOrder(Map<Long,ProductDto> productMap) {
 
         BigDecimal sumPrice = new BigDecimal(0);
 
@@ -65,17 +66,16 @@ public class OrderService {
             Long id = entry.getKey();
             ProductEntity product = orderRepository.findByProductId(id);
             Integer calcQty = product.getQty() - entry.getValue().getOrderQty();
-            try {
+
+            try{
                 if (calcQty < 0) throw new SoldOutException();
             }catch (SoldOutException e){
-                System.out.println("SoldOutException 발생. 주문한상품량이 재고량보다 큽니다. [상풍명 : "
-                        +product.getName()+"], 재고량["+product.getQty() +"]");
+                System.out.println("SoldOutException 발생. 주문한상품량이 재고량보다 큽니다.");
                 return false;
             }
 
-            product.setQty(calcQty);
 
-            ProductEntity save = orderRepository.save(product);
+            product.setQty(calcQty);
 
             sumPrice = sumPrice.add(entry.getValue().getTotalPrice());
             System.out.println(entry.getValue().getName()+"-"+entry.getValue().getOrderQty()+"개");

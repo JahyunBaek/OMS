@@ -4,33 +4,20 @@ package ko.co._29cm.homework.oms;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
+import java.util.concurrent.*;
 
-import ko.co._29cm.homework.oms.Runner.CmdRunner;
-import org.aspectj.lang.annotation.Before;
-import org.assertj.core.api.Assert;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
+
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ko.co._29cm.homework.oms.Dto.ProductDto;
 import ko.co._29cm.homework.oms.Entity.ProductEntity;
-import ko.co._29cm.homework.oms.Repository.OrderRepository;
 import ko.co._29cm.homework.oms.Service.OrderService;
 
 
@@ -73,34 +59,55 @@ class OmsApplicationTests {
 	@Order(1)
 	@DisplayName("Order Test")
     @Execution(ExecutionMode.CONCURRENT)
-    public void MultidOrder() throws InterruptedException, ExecutionException{
+    public void MultiOrder() throws InterruptedException, ExecutionException{
     	ExecutorService executor = Executors.newFixedThreadPool(2);
-    	Future<ProductEntity> futureFirstOrder = executor.submit(() -> {
-    		Map<Long,ProductDto> productMap = new HashMap<>();
-    		Long pId = 782858l;
-    		Integer pQty = 27;
-    		ProductEntity pInfo1 = orderService.getProduct(pId);
-    		productMap.put(pId, ProductDto.builder().id(pInfo1.getProductId())
-    		.name(pInfo1.getName()).orderQty(pQty).totalPrice(pInfo1.getPrice().multiply(new BigDecimal(pQty))).build());
-			orderService.saveOrder(productMap);
-    		return orderService.getProduct(pId);
-        });
+		CompletableFuture<Boolean> futureFirstOrder = CompletableFuture.supplyAsync(() -> {
+			Map<Long, ProductDto> productMap = new HashMap<>();
+			Long pId = 782858L;
+			Integer pQty = 27;
+			Optional<ProductEntity> pInfo1 = orderService.getProduct(pId);
+			productMap.put(pId, ProductDto.builder()
+					.id(pInfo1.get().getProductId())
+					.name(pInfo1.get().getName())
+					.orderQty(pQty)
+					.totalPrice(pInfo1.get().getPrice().multiply(new BigDecimal(pQty)))
+					.build());
+				return orderService.saveOrder(productMap);
+		}, executor);
 
-    	Future<ProductEntity> futureSecnodOrder = executor.submit(() -> {
-    		Map<Long,ProductDto> productMap = new HashMap<>();
-    		Long pId = 782858l;
-    		Integer pQty = 29;
-    		ProductEntity pInfo1 = orderService.getProduct(pId);
-    		productMap.put(pId, ProductDto.builder().id(pInfo1.getProductId())
-    		.name(pInfo1.getName()).orderQty(pQty).totalPrice(pInfo1.getPrice().multiply(new BigDecimal(pQty))).build());
-			orderService.saveOrder(productMap);
-    		return orderService.getProduct(pId);
-        });
+		CompletableFuture<Boolean> futureSecondOrder = CompletableFuture.supplyAsync(() -> {
+			Map<Long, ProductDto> productMap = new HashMap<>();
+			Long pId = 782858L;
+			Integer pQty = 29;
+			Optional<ProductEntity> pInfo1 = orderService.getProduct(pId);
+			productMap.put(pId, ProductDto.builder()
+					.id(pInfo1.get().getProductId())
+					.name(pInfo1.get().getName())
+					.orderQty(pQty)
+					.totalPrice(pInfo1.get().getPrice().multiply(new BigDecimal(pQty)))
+					.build());
+			return orderService.saveOrder(productMap);
+		}, executor);
 
-		ProductEntity p1 = futureFirstOrder.get();
-		ProductEntity p2 = futureSecnodOrder.get();
 
-		assertThat(p1.getQty()).isPositive();
-		assertThat(p2.getQty()).isPositive();
+		futureFirstOrder.whenCompleteAsync((result, exception) -> {
+			if (exception != null) {
+				System.out.println("오류가발생하였습니다. : " + exception);
+			} else {
+				System.out.println("주문이 종료되었습니다.["+ result+"]");
+			}
+		});
+		futureSecondOrder.whenCompleteAsync((result, exception) -> {
+			if (exception != null) {
+				System.out.println("오류가발생하였습니다. : " + exception);
+			} else {
+				System.out.println("주문이 종료되었습니다.["+ result+"]");
+			}
+		});
+		boolean firstResult = futureFirstOrder.get();
+		boolean secondResult = futureSecondOrder.get();
+
+		assertThat(firstResult).isTrue();
+		assertThat(secondResult).isFalse();
     }
 }
