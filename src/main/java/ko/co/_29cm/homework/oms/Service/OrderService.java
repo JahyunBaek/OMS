@@ -1,6 +1,7 @@
 package ko.co._29cm.homework.oms.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import ko.co._29cm.homework.oms.Repository.OrderRepository;
 import ko.co._29cm.homework.oms.Util.CsvManager;
 import ko.co._29cm.homework.oms.Util.FileManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
@@ -27,9 +29,11 @@ public class OrderService {
     @Value("${Price.deliveryFee}")
     private BigDecimal deliveryFee;
 
+    @Value("${defaultPath}")
+    private String defaultPath;
+
     private final OrderRepository orderRepository;
 
-    private static String defaultPath = "src/main/resources/sample//";
     public boolean InitDB(String csvFileName){
         
         FileManager manager = new CsvManager();
@@ -44,16 +48,17 @@ public class OrderService {
         }
     }
 
-    public ProductEntity getProduct(Long i){
-        return orderRepository.findByProductId(i);
+    @Transactional
+    public Optional<ProductEntity> getProduct(Long i){
+        return orderRepository.findById(i);
     }
 
     public List<ProductEntity> getAllProduct(){
         return orderRepository.findAll();
     }
 
-    @Transactional
-    public boolean saveOrder(Map<Long,ProductDto> productMap){
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public boolean saveOrder(Map<Long,ProductDto> productMap) {
 
         BigDecimal sumPrice = new BigDecimal(0);
 
@@ -61,17 +66,16 @@ public class OrderService {
             Long id = entry.getKey();
             ProductEntity product = orderRepository.findByProductId(id);
             Integer calcQty = product.getQty() - entry.getValue().getOrderQty();
-            try {
+
+            try{
                 if (calcQty < 0) throw new SoldOutException();
             }catch (SoldOutException e){
-                System.out.println("SoldOutException 발생. 주문한상품량이 재고량보다 큽니다. [상풍명 : "
-                        +product.getName()+"], 재고량["+product.getQty() +"]");
+                System.out.println("SoldOutException 발생. 주문한상품량이 재고량보다 큽니다.");
                 return false;
             }
 
-            product.setQty(calcQty);
 
-            ProductEntity save = orderRepository.save(product);
+            product.setQty(calcQty);
 
             sumPrice = sumPrice.add(entry.getValue().getTotalPrice());
             System.out.println(entry.getValue().getName()+"-"+entry.getValue().getOrderQty()+"개");
@@ -89,7 +93,9 @@ public class OrderService {
             System.out.println("------------------------------------------------------------");
             System.out.println("결제금액: "+ StringManager.getFormatStr(sumPrice) +"원");
             System.out.println("------------------------------------------------------------");
+
         }
+
         return true;
     }
 }

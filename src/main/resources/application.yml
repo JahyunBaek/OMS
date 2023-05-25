@@ -1,18 +1,27 @@
 spring:
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
-      path: /h2-console
-logging:
-  level:
-    org:
+  datasource:
+    hikari:
+      driver-class-name: org.h2.Driver
+      jdbc-url: jdbc:h2:mem:public;
+      username: sa
+      password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      naming:
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+#    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
       hibernate:
-        type:
-          descriptor:
-            sql:
-              BasicBinder: trace
+        format_sql: true
+#logging:
+#  level:
+#    org.hibernate: debug
+#    org.springframework: debug
 
 Price:
   deliveryFee: 2500
+
+defaultPath: src/main/resources/sample/
