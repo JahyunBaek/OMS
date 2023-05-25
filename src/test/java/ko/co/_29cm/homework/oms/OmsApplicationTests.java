@@ -7,10 +7,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -38,10 +37,16 @@ class OmsApplicationTests {
     private static ExecutorService executorService;
 
 
-	@Test
-	@Order(0)
-	@DisplayName("DB Init")
-	public void init(){
+	
+	@BeforeAll
+    static void setUpExecutorService() {
+        executorService = Executors.newFixedThreadPool(2);
+    }
+	@BeforeEach
+    void setupValues() {
+        ReflectionTestUtils.setField(orderService, "deliveryFee", new BigDecimal(25));
+		ReflectionTestUtils.setField(orderService, "defaultPath", "src/main/resources/sample/");
+
 		String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
 		boolean temp = orderService.InitDB(actualInput);
 		System.out.println("상품번호\t상품명\t판매가격\t재고수");
@@ -49,18 +54,11 @@ class OmsApplicationTests {
 		System.out.println(temp);
 	}
 
-	@BeforeEach
-    void setupValues() {
-        ReflectionTestUtils.setField(orderService, "deliveryFee", new BigDecimal(25));
-		ReflectionTestUtils.setField(orderService, "defaultPath", "src/main/resources/sample/");
-	}
-
     @Test
-	@Order(1)
 	@DisplayName("Order Test")
     @Execution(ExecutionMode.CONCURRENT)
     public void MultiOrder() throws InterruptedException, ExecutionException{
-    	ExecutorService executor = Executors.newFixedThreadPool(2);
+
 		CompletableFuture<Boolean> futureFirstOrder = CompletableFuture.supplyAsync(() -> {
 			Map<Long, ProductDto> productMap = new HashMap<>();
 			Long pId = 782858L;
@@ -73,7 +71,7 @@ class OmsApplicationTests {
 					.totalPrice(pInfo1.get().getPrice().multiply(new BigDecimal(pQty)))
 					.build());
 				return orderService.saveOrder(productMap);
-		}, executor);
+		}, executorService);
 
 		CompletableFuture<Boolean> futureSecondOrder = CompletableFuture.supplyAsync(() -> {
 			Map<Long, ProductDto> productMap = new HashMap<>();
@@ -87,7 +85,7 @@ class OmsApplicationTests {
 					.totalPrice(pInfo1.get().getPrice().multiply(new BigDecimal(pQty)))
 					.build());
 			return orderService.saveOrder(productMap);
-		}, executor);
+		}, executorService);
 
 
 		futureFirstOrder.whenCompleteAsync((result, exception) -> {
@@ -107,7 +105,6 @@ class OmsApplicationTests {
 		boolean firstResult = futureFirstOrder.get();
 		boolean secondResult = futureSecondOrder.get();
 
-		assertThat(firstResult).isTrue();
-		assertThat(secondResult).isFalse();
+		assertThat(firstResult).isNotEqualTo(secondResult);
     }
 }

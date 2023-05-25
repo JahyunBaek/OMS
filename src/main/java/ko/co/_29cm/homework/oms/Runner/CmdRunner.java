@@ -5,8 +5,6 @@ import java.util.*;
 
 import ko.co._29cm.homework.oms.Dto.ProductDto;
 import ko.co._29cm.homework.oms.Exception.ProductNotFoundException;
-import ko.co._29cm.homework.oms.Exception.SoldOutException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
