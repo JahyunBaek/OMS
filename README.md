@@ -67,6 +67,9 @@
 - JUNIT DB 초기화
 - multi thread 주문으로 인한 재고 처리 확인
 
+## 형상관리
+- git
+- Branch (master, dev)
 
 ## 기타사항
 - 요구사항의 콘솔화면을 위하여 System.out 사용
