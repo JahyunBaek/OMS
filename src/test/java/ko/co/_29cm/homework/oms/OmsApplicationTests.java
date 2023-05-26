@@ -29,10 +29,7 @@ import ko.co._29cm.homework.oms.Service.OrderService;
 @Slf4j
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(properties = {
-		"Price.deliveryFee=2500",
-		"defaultPath=src/main/resources/sample/"
-})
+@TestPropertySource(locations = "classpath:application-test.yml")
 class OmsApplicationTests {
 
 	@Autowired

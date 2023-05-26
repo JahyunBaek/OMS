@@ -19,6 +19,8 @@ import ko.co._29cm.homework.oms.Util.FileManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -34,9 +36,12 @@ public class OrderService {
     public boolean InitDB(String csvFileName){
         
         FileManager manager = new CsvManager();
-
-        List<ProductEntity> productList = manager.ReadFile(defaultPath+csvFileName);
-        
+        List<ProductEntity> productList = null;
+        try {
+            productList = manager.ReadFile(defaultPath + csvFileName);
+        }catch (Exception e){
+            log.error(e.getMessage());
+        }
         if(productList == null || productList.size() == 0)
             return false;
         else{
