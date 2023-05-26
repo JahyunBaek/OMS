@@ -59,7 +59,7 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional(rollbackFor = {SoldOutException.class},isolation = Isolation.READ_COMMITTED)
     public boolean saveOrder(Map<Long,ProductDto> productMap) {
 
         BigDecimal sumPrice = new BigDecimal(0);
