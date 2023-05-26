@@ -7,16 +7,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,8 +26,10 @@ import ko.co._29cm.homework.oms.Entity.ProductEntity;
 import ko.co._29cm.homework.oms.Service.OrderService;
 
 
+@Slf4j
 @SpringBootTest
 @ActiveProfiles("test")
+@TestPropertySource(locations = "classpath:application-test.yml")
 class OmsApplicationTests {
 
 	@Autowired
@@ -36,27 +37,24 @@ class OmsApplicationTests {
 
     private static ExecutorService executorService;
 
-
-	
 	@BeforeAll
     static void setUpExecutorService() {
         executorService = Executors.newFixedThreadPool(2);
     }
-	@BeforeEach
-    void setupValues() {
-        ReflectionTestUtils.setField(orderService, "deliveryFee", new BigDecimal(25));
-		ReflectionTestUtils.setField(orderService, "defaultPath", "src/main/resources/sample/");
 
+	@Test
+	@Order(1)
+	@DisplayName("DB INIT")
+	public void InitDB(){
 		String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
-		boolean temp = orderService.InitDB(actualInput);
-		System.out.println("상품번호\t상품명\t판매가격\t재고수");
-		orderService.getAllProduct().forEach(System.out::println);
-		System.out.println(temp);
+		boolean initResult = orderService.InitDB(actualInput);
+
+		assertThat(initResult).isTrue();
 	}
 
     @Test
+	@Order(2)
 	@DisplayName("Order Test")
-    @Execution(ExecutionMode.CONCURRENT)
     public void MultiOrder() throws InterruptedException, ExecutionException{
 
 		CompletableFuture<Boolean> futureFirstOrder = CompletableFuture.supplyAsync(() -> {
@@ -89,22 +87,22 @@ class OmsApplicationTests {
 
 
 		futureFirstOrder.whenCompleteAsync((result, exception) -> {
-			if (exception != null) {
-				System.out.println("오류가발생하였습니다. : " + exception);
-			} else {
-				System.out.println("주문이 종료되었습니다.["+ result+"]");
-			}
+			callbackTest(exception,result);
 		});
 		futureSecondOrder.whenCompleteAsync((result, exception) -> {
-			if (exception != null) {
-				System.out.println("오류가발생하였습니다. : " + exception);
-			} else {
-				System.out.println("주문이 종료되었습니다.["+ result+"]");
-			}
+			callbackTest(exception,result);
 		});
 		boolean firstResult = futureFirstOrder.get();
 		boolean secondResult = futureSecondOrder.get();
 
 		assertThat(firstResult).isNotEqualTo(secondResult);
     }
+
+    public void callbackTest(Throwable e, Boolean result){
+		if (e != null) {
+			log.error("오류가발생하였습니다." + e.getMessage());
+		} else {
+			log.info("주문이 종료되었습니다.["+ result+"]");
+		}
+	}
 }

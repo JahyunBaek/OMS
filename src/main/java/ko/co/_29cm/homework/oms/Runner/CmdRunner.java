@@ -24,20 +24,20 @@ public class CmdRunner implements CommandLineRunner {
     private final OrderService orderService;
 
     @Override
-    public void run(String... args) throws Exception {
-        try (Scanner scanner = new Scanner(System.in)) {
-            log.info("INIT DB...");
-            System.out.println("Please Input File Name \n Example ===> [29CM 23 SS 공채] 백엔드 과제 _items.csv ");
-            String actualInput = scanner.nextLine();
-            //String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
+    public void run(String... args) {
+            try (Scanner scanner = new Scanner(System.in)) {
+                log.info("INIT DB...");
+                System.out.println("Please Input File Name \n Example ===> [29CM 23 SS 공채] 백엔드 과제 _items.csv ");
+                String actualInput = scanner.nextLine();
+                //String actualInput = "[29CM 23 SS 공채] 백엔드 과제 _items.csv";
 
-            if (orderService.InitDB(actualInput)) {
-                log.info("DB INIT Completed...");
-                handleUserInput(scanner);
-            } else {
-                log.error("DB INIT Failed...");
+                if (orderService.InitDB(actualInput)) {
+                    log.info("DB INIT Completed...");
+                    handleUserInput(scanner);
+                } else {
+                    log.error("DB INIT Failed...");
+                }
             }
-        }
     }
 
     private void handleUserInput(Scanner scanner) {
